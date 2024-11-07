@@ -3,14 +3,14 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Points, PointMaterial, Text, PerspectiveCamera, useTexture } from "@react-three/drei"
+import { Points, PointMaterial } from "@react-three/drei"
 import * as THREE from "three"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { saveEmail } from "./actions/saveEmail"
 
-// Error Boundary Component
+// Componente ErrorBoundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
     super(props)
@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
   render() {
     if (this.state.hasError) {
-      return <h1>Something went wrong. Please try refreshing the page.</h1>
+      return <h1>Algo salió mal. Por favor, intenta refrescar la página.</h1>
     }
 
     return this.props.children
@@ -66,7 +66,7 @@ const useCountdown = (targetDate: string) => {
 
 function MysteriousBackground() {
   const points = useRef<THREE.Points>(null!)
-  const { size, camera } = useThree()
+  const { camera } = useThree()
   const [positions] = useState(() => {
     const pos = new Float32Array(2000 * 3)
     for (let i = 0; i < 2000; i++) {
@@ -101,8 +101,6 @@ function MysteriousBackground() {
 }
 
 const CountdownUnit = ({ value, label, maxValue }: { value: number; label: string; maxValue: number }) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-
   const [prevValue, setPrevValue] = useState(value)
   const [animatedValue, setAnimatedValue] = useState(value)
 
@@ -159,93 +157,6 @@ const ProgressiveLoading = ({ progress }: { progress: number }) => {
       </div>
       <span className="text-[#33ff33] text-2xl font-bold">{Math.round(progress)}%</span>
     </div>
-  )
-}
-
-function CIATicketCard({ code, isRevealed, onReveal }: { code: string; isRevealed: boolean; onReveal: () => void }) {
-  const meshRef = useRef<THREE.Mesh>(null!)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [hovered, setHovered] = useState(false)
-  const texture = useTexture("/placeholder.svg?height=512&width=512")
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.1
-      meshRef.current.position.y = Math.sin(state.clock.getElapsedTime()) * 0.05
-    }
-  })
-
-  return (
-    <mesh
-      ref={meshRef}
-      onClick={onReveal}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
-      <planeGeometry args={[4, 2.5]} />
-      <meshStandardMaterial color="#f0f0f0" map={texture} />
-      <Text
-        position={[0, 0.8, 0.01]}
-        fontSize={0.2}
-        color="#000000"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Bold.json"
-      >
-        TOP SECRET
-      </Text>
-      <Text
-        position={[0, 0.4, 0.01]}
-        fontSize={0.15}
-        color="#000000"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Regular.json"
-      >
-        CENTRAL INTELLIGENCE AGENCY
-      </Text>
-      <Text
-        position={[0, 0, 0.01]}
-        fontSize={0.18}
-        color="#000000"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Bold.json"
-      >
-        {isRevealed ? code : "Click to Reveal Your Code"}
-      </Text>
-      <Text
-        position={[0, -0.4, 0.01]}
-        fontSize={0.1}
-        color="#000000"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Regular.json"
-      >
-        AUTHORIZED ACCESS ONLY
-      </Text>
-      {/* CIA Logo (simplified) */}
-      <mesh position={[-1.5, 0.8, 0.01]}>
-        <circleGeometry args={[0.2, 32]} />
-        <meshBasicMaterial color="#000000" />
-      </mesh>
-      {/* Lock Icon */}
-      <Text
-        position={[1.5, 0.8, 0.01]}
-        fontSize={0.2}
-        color="#000000"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Regular.json"
-      >
-        🔒
-      </Text>
-      {/* Edge details */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.PlaneGeometry(4, 2.5)]} />
-        <lineBasicMaterial color="#000000" linewidth={2} />
-      </lineSegments>
-    </mesh>
   )
 }
 
@@ -307,8 +218,6 @@ export default function Component() {
   const [showContent, setShowContent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [secretCode, setSecretCode] = useState("")
-  const [isCodeRevealed, setIsCodeRevealed] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [isCRTOn, setIsCRTOn] = useState(false)
   const [showMatrixRain, setShowMatrixRain] = useState(false)
@@ -323,12 +232,6 @@ export default function Component() {
 
   useEffect(() => {
     console.log("Component mounted")
-    const savedCode = localStorage.getItem("secretCode")
-    if (savedCode) {
-      setSecretCode(savedCode)
-      setSubmitted(true)
-    }
-
     const loadingInterval = setInterval(() => {
       setLoadingProgress((prev) => {
         if (prev >= 100) {
@@ -344,23 +247,34 @@ export default function Component() {
       })
     }, 30)
 
+    // Comprobar si el usuario ya se ha registrado
+    const isUserRegistered = localStorage.getItem("isUserRegistered")
+    if (isUserRegistered === "true") {
+      setSubmitted(true)
+    }
+
     return () => clearInterval(loadingInterval)
   }, [])
 
-  const handleSubmit = async (e:  React.FormEvent) => {
-    e.preventDefault()
+  const submitEmail = async () => {
     setIsSubmitting(true)
     setErrorMessage("")
-    console.log(e)
-
     try {
-      // Call the server action to save the email
       await saveEmail(email)
       setSubmitted(true)
+      // Guardar en localStorage que el usuario se ha registrado
+      localStorage.setItem("isUserRegistered", "true")
     } catch (error) {
       console.error("Error saving email:", error)
-      setErrorMessage("An error occurred. Please try again.")
+      setErrorMessage("Ocurrió un error. Por favor, inténtalo de nuevo.")
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setShowPills(true) // Muestra el modal de las píldoras
   }
 
   const maxValues = {
@@ -375,19 +289,13 @@ export default function Component() {
     setShowPills(false)
   }
 
-  const togglePills = () => {
-    setShowPills(!showPills)
-    setShowMatrixRain(false)
-  }
-
   const handlePillChoice = (choice: 'blue' | 'red') => {
     setPillChoice(choice)
     setShowPills(false)
     if (choice === 'red') {
-      handleSubmit(new Event('submit') as unknown as React.FormEvent)
-    } else {
-      // Do nothing for blue pill, just close the modal
+      submitEmail()
     }
+    // No se necesita acción para la píldora azul
   }
 
   console.log("Component rendering completed")
@@ -395,7 +303,7 @@ export default function Component() {
   return (
     <ErrorBoundary>
       <div className={`relative min-h-screen flex flex-col items-center justify-center bg-[#001100] text-[#33ff33] p-6 md:p-8 overflow-hidden ${isCRTOn ? 'animate-[crtOn_0.5s_ease-in-out]' : ''}`}>
-        {/* CRT overlay */}
+        {/* Superposición CRT */}
         <div className="absolute inset-0 pointer-events-none z-50">
           <div className="w-full h-full bg-[#001100] opacity-[0.03] animate-[flicker_0.15s_infinite]"></div>
           <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]"></div>
@@ -424,7 +332,7 @@ export default function Component() {
         )}
         {loading && <ProgressiveLoading progress={loadingProgress} />}
         <div className={`absolute inset-0 transition-opacity duration-1000 ${showBackground ? 'opacity-100' : 'opacity-0'}`}>
-          <Suspense fallback={<div>Loading 3D environment...</div>}>
+          <Suspense fallback={<div>Cargando entorno 3D...</div>}>
             <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
               <MysteriousBackground />
             </Canvas>
@@ -475,7 +383,6 @@ export default function Component() {
                 type="submit" 
                 className="w-full bg-[#33ff33] text-[#001100] hover:bg-[#66ff66] disabled:opacity-50 font-mono"
                 disabled={isSubmitting}
-                onClick={togglePills}
               >
                 {isSubmitting ? (
                   <>
@@ -491,22 +398,8 @@ export default function Component() {
             <div className={`text-center transition-all duration-1000 ${
               showContent ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-10'
             }`}>
-              <p className="text-xl font-bold text-[#33ff33] mb-2">Bienvenido al Despertar</p>
-              <p className="text-sm text-gray-400 mb-4">Tu código de acceso espera...</p>
-              <div className="w-full h-64">
-                <Suspense fallback={<div>Cargando código secreto...</div>}>
-                  <Canvas>
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} />
-                    <PerspectiveCamera makeDefault position={[0, 0, 3]} />
-                    <CIATicketCard 
-                      code={secretCode} 
-                      isRevealed={isCodeRevealed} 
-                      onReveal={() => setIsCodeRevealed(true)} 
-                    />
-                  </Canvas>
-                </Suspense>
-              </div>
+              <p className="text-2xl md:text-3xl font-bold text-[#33ff33] mb-4">¡Ya estás registrado!</p>
+              <p className="text-lg text-gray-300 mb-6">Mantente atento. Pronto recibirás más información en tu correo electrónico.</p>
             </div>
           )}
         </div>
