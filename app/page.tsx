@@ -15,7 +15,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true }
   }
 
@@ -57,14 +57,14 @@ const useCountdown = (targetDate: string) => {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [calculateTimeLeft])
+  }, [])
 
   return timeLeft
 }
 
 function MysteriousBackground() {
   const points = useRef<THREE.Points>(null!)
-  const { camera } = useThree()
+  const { size, camera } = useThree()
   const [positions] = useState(() => {
     const pos = new Float32Array(2000 * 3)
     for (let i = 0; i < 2000; i++) {
@@ -99,7 +99,8 @@ function MysteriousBackground() {
 }
 
 const CountdownUnit = ({ value, label, maxValue }: { value: number; label: string; maxValue: number }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [prevValue, setPrevValue] = useState(value)
   const [animatedValue, setAnimatedValue] = useState(value)
 
@@ -113,7 +114,7 @@ const CountdownUnit = ({ value, label, maxValue }: { value: number; label: strin
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-20 h-20 mb-2">
+      <div className="relative w-14 h-14 md:w-20 md:h-20 mb-1 md:mb-2">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle
             className="text-gray-700"
@@ -140,7 +141,7 @@ const CountdownUnit = ({ value, label, maxValue }: { value: number; label: strin
           {value}
         </div>
       </div>
-      <span className="text-sm uppercase">{label}</span>
+      <span className="text-xs md:text-sm uppercase">{label}</span>
     </div>
   )
 }
@@ -246,9 +247,56 @@ function CIATicketCard({ code, isRevealed, onReveal }: { code: string; isReveale
   )
 }
 
+const MatrixRain = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const columns = canvas.width / 20
+    const drops: number[] = []
+
+    for (let i = 0; i < columns; i++) {
+      drops[i] = 1
+    }
+
+    const draw = () => {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      ctx.fillStyle = '#0F0'
+      ctx.font = '15px monospace'
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = String.fromCharCode(Math.random() * 128)
+        ctx.fillText(text, i * 20, drops[i] * 20)
+
+        if (drops[i] * 20 > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0
+        }
+
+        drops[i]++
+      }
+    }
+
+    const interval = setInterval(draw, 33)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return <canvas ref={canvasRef} className="fixed inset-0 z-40" />
+}
+
 export default function Component() {
   console.log("Component rendering started")
-  const timeLeft = useCountdown("2024-12-31T23:59:59")
+  const timeLeft = useCountdown("2024-11-10T21:00:00")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -261,7 +309,15 @@ export default function Component() {
   const [isCodeRevealed, setIsCodeRevealed] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [isCRTOn, setIsCRTOn] = useState(false)
-
+  const [showMatrixRain, setShowMatrixRain] = useState(false)
+  const [showPills, setShowPills] = useState(false)
+  const [pillChoice, setPillChoice] = useState<'blue' | 'red' | null>(null)
+  const [version] = useState(() => {
+    const major = Math.floor(Math.random() * 10)
+    const minor = Math.floor(Math.random() * 10)
+    const patch = Math.floor(Math.random() * 10)
+    return `v${major}.${minor}.${patch}`
+  })
 
   useEffect(() => {
     console.log("Component mounted")
@@ -279,7 +335,7 @@ export default function Component() {
           setTimeout(() => setShowBackground(true), 500)
           setTimeout(() => setShowTitle(true), 1000)
           setTimeout(() => setShowContent(true), 2000)
-          setTimeout(() => setIsCRTOn(true), 1000) // Add CRT power-on effect
+          setTimeout(() => setIsCRTOn(true), 1000)
           return 100
         }
         return prev + 1
@@ -293,6 +349,7 @@ export default function Component() {
     e.preventDefault()
     setIsSubmitting(true)
     setErrorMessage("")
+    console.log(e)
 
     try {
       // Make the POST request to add the email
@@ -314,11 +371,11 @@ export default function Component() {
         setSecretCode(uniqueCode)
         localStorage.setItem("secretCode", uniqueCode)
       } else if (data.message === "Access already exists.") {
-        setErrorMessage("This email has already been registered.")
+        setErrorMessage("Este email ya ha sido registrado.")
       }
     } catch (error) {
       console.error("Error submitting email:", error)
-      setErrorMessage("An error occurred. Please try again later.")
+      setErrorMessage("Ha ocurrido un error. Por favor, inténtalo de nuevo más tarde.")
     } finally {
       setIsSubmitting(false)
       setEmail("")
@@ -332,16 +389,58 @@ export default function Component() {
     seconds: 60,
   }
 
+  const toggleMatrixRain = () => {
+    setShowMatrixRain(!showMatrixRain)
+    setShowPills(false)
+  }
+
+  const togglePills = () => {
+    setShowPills(!showPills)
+    setShowMatrixRain(false)
+  }
+
+  const handlePillChoice = (choice: 'blue' | 'red') => {
+    setPillChoice(choice)
+    setShowPills(false)
+    if (choice === 'red') {
+      handleSubmit(new Event('submit') as unknown as React.FormEvent)
+    } else {
+      // Do nothing for blue pill, just close the modal
+    }
+  }
+
   console.log("Component rendering completed")
 
   return (
     <ErrorBoundary>
-      <div className={`relative min-h-screen flex flex-col items-center justify-center bg-[#001100] text-[#33ff33] p-4 overflow-hidden ${isCRTOn ? 'animate-[crtOn_0.5s_ease-in-out]' : ''}`}>
+      <div className={`relative min-h-screen flex flex-col items-center justify-center bg-[#001100] text-[#33ff33] p-6 md:p-8 overflow-hidden ${isCRTOn ? 'animate-[crtOn_0.5s_ease-in-out]' : ''}`}>
         {/* CRT overlay */}
         <div className="absolute inset-0 pointer-events-none z-50">
           <div className="w-full h-full bg-[#001100] opacity-[0.03] animate-[flicker_0.15s_infinite]"></div>
           <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.15),rgba(0,0,0,0.15)_1px,transparent_1px,transparent_2px)]"></div>
         </div>
+        <div className="absolute top-4 left-4 text-[#33ff33] text-xs font-mono z-50">
+          <p>{version}</p>
+        </div>
+        <div className="absolute top-4 right-4 text-[#33ff33] text-xs font-mono z-50">
+          <p>Mensaje Interceptado: XJ7-92</p>
+          <p className="text-[0.6rem] mt-1">Despierta... <span className="cursor-pointer hover:text-[#66ff66]" onClick={toggleMatrixRain}>¿Realidad o simulación?</span></p>
+        </div>
+        {showMatrixRain && <MatrixRain />}
+        {showPills && (
+          <div className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-80">
+            <div className="flex space-x-8">
+              <div className="cursor-pointer transform transition-transform hover:scale-110" onClick={() => handlePillChoice('blue')}>
+                <div className="w-16 h-32 bg-blue-500 rounded-full"></div>
+                <p className="text-center mt-2 text-blue-500">Ignorar</p>
+              </div>
+              <div className="cursor-pointer transform transition-transform hover:scale-110" onClick={() => handlePillChoice('red')}>
+                <div className="w-16 h-32 bg-red-500 rounded-full"></div>
+                <p className="text-center mt-2 text-red-500">Despertar</p>
+              </div>
+            </div>
+          </div>
+        )}
         {loading && <ProgressiveLoading progress={loadingProgress} />}
         <div className={`absolute inset-0 transition-opacity duration-1000 ${showBackground ? 'opacity-100' : 'opacity-0'}`}>
           <Suspense fallback={<div>Loading 3D environment...</div>}>
@@ -356,17 +455,19 @@ export default function Component() {
               showTitle ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-10'
             } font-mono`}
           >
-            The Awakening is Coming
+            La Experiencia Comienza
           </h1>
           {!submitted && (
-            <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center mb-12 transition-all duration-1000 ${
+            <div className={`flex flex-row gap-4 text-center mb-12 transition-all duration-1000 ${
               showContent ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-10'
             }`}>
               {Object.entries(timeLeft).map(([unit, value]) => (
                 <CountdownUnit 
                   key={unit} 
                   value={value as number} 
-                  label={unit} 
+                  label={unit === 'days' ? 'días' : 
+                         unit === 'hours' ? 'horas' : 
+                         unit === 'minutes' ? 'min' : 'seg'} 
                   maxValue={maxValues[unit as keyof typeof maxValues]}
                 />
               ))}
@@ -378,7 +479,7 @@ export default function Component() {
             }`}>
               <Input
                 type="email"
-                placeholder="Enter your email to join the revolution"
+                placeholder="Tu email para el viaje"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -393,14 +494,15 @@ export default function Component() {
                 type="submit" 
                 className="w-full bg-[#33ff33] text-[#001100] hover:bg-[#66ff66] disabled:opacity-50 font-mono"
                 disabled={isSubmitting}
+                onClick={togglePills}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Preparing...
+                    Desconectando...
                   </>
                 ) : (
-                  "Prepare for Enlightenment"
+                  "Elige tu destino"
                 )}
               </Button>
             </form>
@@ -408,10 +510,10 @@ export default function Component() {
             <div className={`text-center transition-all duration-1000 ${
               showContent ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-10'
             }`}>
-              <p className="text-xl font-bold text-blue-500 mb-2">You are now part of the Awakening</p>
-              <p className="text-sm text-gray-400 mb-4">Your secret code awaits...</p>
+              <p className="text-xl font-bold text-[#33ff33] mb-2">Bienvenido al Despertar</p>
+              <p className="text-sm text-gray-400 mb-4">Tu código de acceso espera...</p>
               <div className="w-full h-64">
-                <Suspense fallback={<div>Loading secret code...</div>}>
+                <Suspense fallback={<div>Cargando código secreto...</div>}>
                   <Canvas>
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} />
