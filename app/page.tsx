@@ -8,6 +8,7 @@ import * as THREE from "three"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { saveEmail } from "./actions/saveEmail"
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -346,40 +347,19 @@ export default function Component() {
     return () => clearInterval(loadingInterval)
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e:  React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setErrorMessage("")
     console.log(e)
 
     try {
-      // Make the POST request to add the email
-      const response = await fetch(`/api/accesses/add?email=${encodeURIComponent(email)}`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-
-      const data = await response.json()
-      console.log("API response:", data)
-
-      if (data.message === "Access saved successfully.") {
-        setSubmitted(true)
-        // Generate a unique code (this could be returned from the API instead)
-        const uniqueCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-        setSecretCode(uniqueCode)
-        localStorage.setItem("secretCode", uniqueCode)
-      } else if (data.message === "Access already exists.") {
-        setErrorMessage("Este email ya ha sido registrado.")
-      }
+      // Call the server action to save the email
+      await saveEmail(email)
+      setSubmitted(true)
     } catch (error) {
-      console.error("Error submitting email:", error)
-      setErrorMessage("Ha ocurrido un error. Por favor, inténtalo de nuevo más tarde.")
-    } finally {
-      setIsSubmitting(false)
-      setEmail("")
+      console.error("Error saving email:", error)
+      setErrorMessage("An error occurred. Please try again.")
     }
   }
 
@@ -503,7 +483,7 @@ export default function Component() {
                     Desconectando...
                   </>
                 ) : (
-                  "Elige tu destino"
+                  "Empezar el viaje"
                 )}
               </Button>
             </form>
