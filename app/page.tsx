@@ -208,7 +208,6 @@ const MatrixRain = () => {
 }
 
 export default function Component() {
-  console.log("Component rendering started")
   const timeLeft = useCountdown("2024-11-10T21:00:00")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(true)
@@ -231,7 +230,6 @@ export default function Component() {
   })
 
   useEffect(() => {
-    console.log("Component mounted")
     const loadingInterval = setInterval(() => {
       setLoadingProgress((prev) => {
         if (prev >= 100) {
@@ -298,7 +296,6 @@ export default function Component() {
     // No se necesita acción para la píldora azul
   }
 
-  console.log("Component rendering completed")
 
   return (
     <ErrorBoundary>
